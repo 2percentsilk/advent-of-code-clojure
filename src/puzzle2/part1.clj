@@ -1,5 +1,5 @@
 ;; https://adventofcode.com/2018/day/2
-(ns puzzle2
+(ns puzzle2.part1
   (:require [clojure.string :as str]))
 
 (defn counter-reducer [count-result, character]

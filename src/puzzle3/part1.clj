@@ -1,17 +1,17 @@
-;;https://adventofcode.com/2018/day/3
+;; https://adventofcode.com/2018/day/3
 (ns puzzle3.part1
   (:require [clojure.string :as str]))
 
 (defn claim-regex [x]
-  (map read-string (drop 1 (re-find #"#\d+ @ (\d+),(\d+): (\d+)x(\d+)" x))))
+  (map read-string (drop 1 (re-find #"#(\d+) @ (\d+),(\d+): (\d+)x(\d+)" x))))
 
-(assert (= '(30 2 5 4) (claim-regex "#123 @ 30,2: 5x4")))
+(assert (= '(123 30 2 5 4) (claim-regex "#123 @ 30,2: 5x4")))
 
 (defn parse-claim [x]
-  (let [[left-start top-start width height] (claim-regex x)]
-    (vector left-start top-start (- (+ left-start width) 1) (- (+ top-start height) 1))))
+  (let [[id left-start top-start width height] (claim-regex x)]
+    (vector id left-start top-start (- (+ left-start width) 1) (- (+ top-start height) 1))))
 
-(assert (= [3 2 7 5] (parse-claim "#123 @ 3,2: 5x4")))
+(assert (= [123 3 2 7 5] (parse-claim "#123 @ 3,2: 5x4")))
 
 (defn is-in-bounds [row-index top bottom]
   (and (>= row-index top) (<= row-index bottom)))
@@ -25,22 +25,22 @@
 (assert (= 1 (mark-cell-by-claim 1 0 1 1)))
 
 (defn mark-row-by-claim [row-index row claim-bounds]
-  (let [[left top right bottom] claim-bounds]
+  (let [[claim-id left top right bottom] claim-bounds]
     (if (is-in-bounds row-index top bottom)
-      (map-indexed (fn [index cell] (mark-cell-by-claim index cell left right)) row)
+      (vec (map-indexed (fn [index cell] (mark-cell-by-claim index cell left right)) row))
       row
     )
   ))
 
-(assert (= [0 0] (mark-row-by-claim 0 [0 0] [1 1 1 1])))
-(assert (= [0 1] (mark-row-by-claim 1 [0 0] [1 1 1 1])))
+(assert (= [0 0] (mark-row-by-claim 0 [0 0] [0 1 1 1 1])))
+(assert (= [0 1] (mark-row-by-claim 1 [0 0] [1 1 1 1 1])))
 
 (defn claim-reducer [fabric-state claim-bounds]
-  (map-indexed
+  (vec (map-indexed
     (fn [index row] (mark-row-by-claim index row claim-bounds))
-    fabric-state))
+    fabric-state)))
 
-(assert (= [[0 0] [0 1]] (claim-reducer [[0 0] [0 0]] [1 1 1 1])))
+(assert (= [[0 0] [0 1]] (claim-reducer [[0 0] [0 0]] [0 1 1 1 1])))
 
 (defn initial-fabric-state [width height]
   (vec (replicate height (vec (replicate width 0)))))
@@ -49,7 +49,7 @@
 (assert (= [[0] [0]] (initial-fabric-state 1 2)))
 
 (defn claimed-fabric-state [fabric-width fabric-height claims]
-  (reduce claim-reducer (initial-fabric-state fabric-width fabric-height) claims))
+  (vec (reduce claim-reducer (initial-fabric-state fabric-width fabric-height) claims)))
 
 (defn overlaps-in-row [state-row]
   (count (filter (fn [x] (> x 1)) state-row)))
@@ -67,10 +67,10 @@
 (assert (= 4 (overlapping-claim-squares 8 8 (map parse-claim test-claim-strings))))
 
 (defn claim-width [claim]
-  (get claim 2))
+  (get claim 3))
 
 (defn claim-height [claim]
-  (get claim 3))
+  (get claim 4))
 
 (defn solve [claim-strings]
   (let [claims (map parse-claim claim-strings)

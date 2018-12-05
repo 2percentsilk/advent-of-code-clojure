@@ -1,4 +1,4 @@
-;;https://adventofcode.com/2018/day/2#part2
+;; https://adventofcode.com/2018/day/2#part2
 (ns puzzle2.part2
   (:require [clojure.string :as str])
   (:require [clojure.data :as data]))

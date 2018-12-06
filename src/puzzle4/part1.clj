@@ -130,7 +130,11 @@
     (range start end)))
 
 (defn max-frequency-minute [ranges]
-  (key (apply max-key val (frequencies (apply concat (map range-list ranges))))))
+  (let [freqs (frequencies (apply concat (map range-list ranges)))]
+    (if
+      (empty? freqs)
+      [0 0] ; spends 0 times sleeping on zeroth-minute
+      (apply max-key val freqs))))
 
 (def test-lines-2
   '("[1518-11-01 00:00] Guard #10 begins shift"
@@ -158,7 +162,7 @@
         max-guard-id (key (apply max-key val (guard-minutes-slept guard-ranges)))
         max-guard-ranges (get guard-ranges max-guard-id)
         flattened-ranges (apply concat (vals max-guard-ranges))]
-    (* max-guard-id (max-frequency-minute flattened-ranges))))
+    (* max-guard-id (key (max-frequency-minute flattened-ranges)))))
 
 (assert (= 240 (max-sleep-guard test-lines-2)))
 

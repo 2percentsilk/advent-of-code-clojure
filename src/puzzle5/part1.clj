@@ -18,12 +18,12 @@
 (assert (= '(\a) (stack-reducer '() \a)))
 (assert (= '() (stack-reducer '(\a) \A)))
 
-(defn result [input]
+(defn final-reacted [input]
   (reduce stack-reducer '() input))
 
-(assert (= () (result "aAbB")))
+(assert (= () (final-reacted "aAbB")))
 
 (def loaded-string (slurp "inputs/puzzle5"))
 
 (defn -main []
-  (println (count (result loaded-string))))
+  (println (count (final-reacted loaded-string))))

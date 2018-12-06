@@ -39,7 +39,7 @@
 (assert (= 14 (solve '(7, 7, -2, -7, -4))))
 
 (def parsed-input
-  (map read-string (str/split (slurp "inputs/puzzle1") #"\n")))
+  (map read-string (str/split-lines (slurp "inputs/puzzle1"))))
 
 (defn -main []
   (println (solve parsed-input)))

@@ -2,13 +2,13 @@
 (ns puzzle3.part1
   (:require [clojure.string :as str]))
 
-(defn claim-regex [x]
-  (map read-string (drop 1 (re-find #"#(\d+) @ (\d+),(\d+): (\d+)x(\d+)" x))))
+(defn read-claim [x]
+  (map read-string (rest (re-find #"#(\d+) @ (\d+),(\d+): (\d+)x(\d+)" x))))
 
-(assert (= '(123 30 2 5 4) (claim-regex "#123 @ 30,2: 5x4")))
+(assert (= '(123 30 2 5 4) (read-claim "#123 @ 30,2: 5x4")))
 
 (defn parse-claim [x]
-  (let [[id left-start top-start width height] (claim-regex x)]
+  (let [[id left-start top-start width height] (read-claim x)]
     (vector id left-start top-start (- (+ left-start width) 1) (- (+ top-start height) 1))))
 
 (assert (= [123 3 2 7 5] (parse-claim "#123 @ 3,2: 5x4")))
@@ -79,8 +79,7 @@
     (overlapping-claim-squares
       (apply max claim-widths)
       (apply max claim-heights)
-      claims)
-  ))
+      claims)))
 
 (assert (= 4 (solve test-claim-strings)))
 

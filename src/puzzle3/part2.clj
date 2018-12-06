@@ -13,7 +13,7 @@
   ))
 
 (defn is-row-covered-once [row left right]
-  (every? #{1} (subvec row left (+ right 1))))
+  (every? #{1} (subvec row left (inc right))))
 
 (defn is-fabric-covered-once [fabric left top right bottom]
   (every?

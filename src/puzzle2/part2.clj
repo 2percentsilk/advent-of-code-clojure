@@ -14,7 +14,7 @@
 (defn get-overlapping-part [x y]
   (let [hash-x (hash-positions x)
         hash-y (hash-positions y)
-        expected-similarity (- (count x) 1)
+        expected-similarity (dec (count x))
         overlap-map (last (data/diff hash-x hash-y))]
     (if (= expected-similarity (count overlap-map)) (overlap-string overlap-map))
   ))
@@ -24,8 +24,8 @@
 (assert (= nil (get-overlapping-part "abcde" "axcye")))
 
 (defn solve [input]
-  (let [all-overlaps (for [x1 input x2 input] (get-overlapping-part x1 x2))]
-    (first (remove nil? all-overlaps))))
+  (let [all-valid-overlaps (for [x1 input x2 input] (get-overlapping-part x1 x2))]
+    (some identity all-valid-overlaps)))
 
 (def test-input '("abcde" "fghij" "klmno" "pqrst" "fguij" "axcye" "wvxyz"))
 

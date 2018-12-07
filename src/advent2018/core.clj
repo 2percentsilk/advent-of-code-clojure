@@ -1,0 +1,10 @@
+(ns clojure-advent.core)
+
+(defn foo
+  "I don't do a whole lot."
+  [x]
+  (println x "Hello, World!"))
+
+(str "test")
+
+(slurp "inputs/puzzle2")

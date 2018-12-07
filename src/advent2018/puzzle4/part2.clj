@@ -1,5 +1,5 @@
 ;; https://adventofcode.com/2018/day/4#part2
-(ns puzzle4.part2
+(ns advent2018.puzzle4.part2
   (:use [puzzle4.part1 :exclude (-main)]))
 
 (defn max-minute-for-guards [guard-ranges]

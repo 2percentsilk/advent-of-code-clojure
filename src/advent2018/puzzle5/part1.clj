@@ -1,5 +1,5 @@
 ;; https://adventofcode.com/2018/day/5
-(ns puzzle5.part1)
+(ns advent2018.puzzle5.part1)
 
 (defn is-reaction [f s]
   (cond

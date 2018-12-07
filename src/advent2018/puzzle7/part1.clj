@@ -1,5 +1,5 @@
 ;; https://adventofcode.com/2018/day/7
-(ns puzzle7.part1
+(ns advent2018.puzzle7.part1
   (:require [clojure.string :as str]))
 
 (defn start [input-string]
@@ -8,7 +8,7 @@
 (defn end [input-string]
   (subs input-string 36 37))
 
-(def test-edges-input 
+(def test-edges-input
   '("Step C must be finished before step F can begin."
     "Step C must be finished before step A can begin."
     "Step A must be finished before step B can begin."))

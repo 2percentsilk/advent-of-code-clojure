@@ -1,5 +1,5 @@
 ;; https://adventofcode.com/2018/day/1#part2
-(ns puzzle1.part2
+(ns advent2018.puzzle1.part2
   (:require [clojure.string :as str]))
 
 (defn find-match [list, x]

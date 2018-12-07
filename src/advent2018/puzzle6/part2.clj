@@ -1,5 +1,5 @@
 ;; https://adventofcode.com/2018/day/6#part2
-(ns puzzle6.part2
+(ns advent2018.puzzle6.part2
   (:use [puzzle6.part1 :exclude (-main)]))
 
 (defn sum-of-distances [x y coordinates]

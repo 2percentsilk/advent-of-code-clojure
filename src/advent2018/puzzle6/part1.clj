@@ -1,5 +1,5 @@
 ;; https://adventofcode.com/2018/day/6
-(ns puzzle6.part1
+(ns advent2018.puzzle6.part1
   (:require [clojure.string :as str]))
 
 (defn left-bound [inputs]
@@ -29,7 +29,7 @@
         count-min (count min-coordinates)]
     (if (= count-min 1) (first (first min-coordinates)) nil)))
 
-(def test-inputs 
+(def test-inputs
   '([1, 1]
     [1, 6]
     [8, 3]

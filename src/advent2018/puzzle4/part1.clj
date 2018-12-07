@@ -1,5 +1,5 @@
 ;; https://adventofcode.com/2018/day/4
-(ns puzzle4.part1
+(ns advent2018.puzzle4.part1
   (:require [clojure.string :as str]))
 
 (defn parse-guard-id-line [x]
@@ -103,7 +103,7 @@
         asleep-times (fall-asleep-times lines)
         id-keys (keys guard-dates)]
     (into {} (map
-      (fn [x] 
+      (fn [x]
         (hash-map x (into {} (map (fn [y] (sleep-ranges-for-date y (get wake-times y) (get asleep-times y)))
         (get guard-dates x)))))
       id-keys

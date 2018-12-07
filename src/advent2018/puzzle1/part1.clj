@@ -1,5 +1,5 @@
 ;; https://adventofcode.com/2018/day/1
-(ns puzzle1.part1
+(ns advent2018.puzzle1.part1
   (:require [clojure.string :as str]))
 
 (defn solve [input]

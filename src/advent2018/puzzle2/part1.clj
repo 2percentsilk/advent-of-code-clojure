@@ -1,5 +1,5 @@
 ;; https://adventofcode.com/2018/day/2
-(ns puzzle2.part1
+(ns advent2018.puzzle2.part1
   (:require [clojure.string :as str]))
 
 (defn letter-counter [x] (frequencies (str/split x #"")))

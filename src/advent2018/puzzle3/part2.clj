@@ -1,5 +1,5 @@
 ;; https://adventofcode.com/2018/day/3#part2
-(ns puzzle3.part2
+(ns advent2018.puzzle3.part2
   (:use [puzzle3.part1 :exclude (-main)]))
 
 (defn final-fabric-state [claims]

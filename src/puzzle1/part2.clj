@@ -18,8 +18,7 @@
   (let [new-value (+ (current-sum sums-so-far) current-value)]
     (if (find-match sums-so-far new-value)
       new-value
-      (conj sums-so-far new-value))
-  ))
+      (conj sums-so-far new-value))))
 
 (defn solve [input]
   (loop [x input
@@ -28,8 +27,7 @@
           iteration-result (find-match-or-append sums-so-far current-value)]
       (if (vector? iteration-result)
         (recur (if (= (count x) 1) input (drop 1 x)) iteration-result)
-        iteration-result)
-    )))
+        iteration-result))))
 
 ; tests
 (assert (= 0 (solve '(1 -1))))

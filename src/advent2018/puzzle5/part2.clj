@@ -1,6 +1,6 @@
 ;; https://adventofcode.com/2018/day/5#part2
 (ns advent2018.puzzle5.part2
-  (:use [puzzle5.part1 :exclude (-main)]))
+  (:use [advent2018.puzzle5.part1 :exclude (-main)]))
 
 (def test-string "dabAcCaCBAcCcaDA")
 

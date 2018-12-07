@@ -1,6 +1,6 @@
 ;; https://adventofcode.com/2018/day/7#part2
 (ns advent2018.puzzle7.part2
-  (:use [puzzle7.part1 :exclude (-main)]))
+  (:use [advent2018.puzzle7.part1 :exclude (-main)]))
 
 (defn job-duration [character duration-offset]
   (+ (- (int (first character)) 64) duration-offset))

@@ -66,7 +66,6 @@
   (loop [worker-state (initial-worker-state num-workers)
          current-graph input-graph
          count -1]
-    (println worker-state current-graph)
     (let [[new-worker-state new-graph new-count] (update-state worker-state current-graph duration-offset count)]
       (cond
         (empty? current-graph) count

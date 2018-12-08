@@ -25,7 +25,6 @@
         nodes (first input)
         meta-length (second input)
         first-leaf (leaf input-vec start)]
-    (println input first-leaf)
     (if (= 0 nodes)
       ; is a leaf, return
       first-leaf

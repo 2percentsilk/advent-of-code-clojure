@@ -16,12 +16,8 @@
         all (for [x1 xs y1 ys] (vector x1 y1))]
     (reduce + (map (fn [[x y]] (m-cell-value x y serial-num)) all))))
 
-(def m-sum-grid-at (memoize sum-grid-at))
-
-(m-sum-grid-at 1 1 18 3)
-
 (defn max-grid [grids]
-  "each grid has {[x y] sum}"
+  "grid is a hash-map with one key: {[x y] sum}"
   (let [non-nil (filter #(not (nil? %)) grids)]
     (if (empty? non-nil) nil
                          (into {} [(apply max-key val (map first non-nil))]))))

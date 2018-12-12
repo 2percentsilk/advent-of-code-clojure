@@ -4,8 +4,8 @@
 
 (def test-input
   '("..#"
-     "#.."
-     "..."))
+    "#.."
+    "..."))
 
 (defn input-row-map [row y-id]
   (into {} (map-indexed #(assoc {} [%1 y-id] %2) row)))
@@ -51,8 +51,7 @@
           [mnew pnew bnew] (update-map-fn m p dnew bursts)]
       (cond
         (= i 0) bursts
-        :else (recur mnew pnew dnew (dec i) bnew)
-        ))))
+        :else (recur mnew pnew dnew (dec i) bnew)))))
 
 (def puzzle-input
   (str/split-lines (slurp "inputs/2017/day22")))

@@ -11,7 +11,7 @@
 
 (def test-input
   '("p=< 3,0,0>, v=< 2,0,0>, a=<-1,0,0>"
-     "p=< 4,0,0>, v=< 0,0,0>, a=<-2,0,0>"))
+    "p=< 4,0,0>, v=< 0,0,0>, a=<-2,0,0>"))
 
 (def puzzle-input
   (str/split-lines (slurp "inputs/2017/day20")))
@@ -37,12 +37,12 @@
         v (get point 1)
         a (get point 2)
         updated-v (vec (map-indexed #(+ %2 (get a %1)) v))]
-  [; positions
-   (vec (map-indexed #(+ %2 (get updated-v %1)) p))
+    [; positions
+     (vec (map-indexed #(+ %2 (get updated-v %1)) p))
    ; velocity
-   updated-v
+     updated-v
    ; acceleration is constant
-   a]))
+     a]))
 
 (defn remove-collided [points]
   (let [positions (map #(get % 0) points)
@@ -61,9 +61,9 @@
 
 (def test-inputs
   '("p=<-6,0,0>, v=< 3,0,0>, a=< 0,0,0>"
-     "p=<-4,0,0>, v=< 2,0,0>, a=< 0,0,0>"
-     "p=<-2,0,0>, v=< 1,0,0>, a=< 0,0,0>"
-     "p=< 3,0,0>, v=<-1,0,0>, a=< 0,0,0>"))
+    "p=<-4,0,0>, v=< 2,0,0>, a=< 0,0,0>"
+    "p=<-2,0,0>, v=< 1,0,0>, a=< 0,0,0>"
+    "p=< 3,0,0>, v=<-1,0,0>, a=< 0,0,0>"))
 
 ; Part 1
 ; Logic: long term position will be dominated by acceleration values

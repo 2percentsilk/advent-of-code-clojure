@@ -85,7 +85,7 @@
 (defn repeated-ins-8-to-12 [r3 r4]
   (bit-and (* (bit-and (+ r3 (bit-and r4 255)) 16777215) 65899) 16777215))
 
-(defn generate-c-at-28 [input]
+(defn generate-r3-at-28 [input]
   (let [r4 (bit-or input 65536)
         r3 (repeated-ins-8-to-12 7041048 r4)
         r4-2 (int (Math/floor (/ r4 256)))
@@ -94,9 +94,9 @@
         r3-3 (repeated-ins-8-to-12 r3-2 r4-3)]
     r3-3))
 
-(defn last-c-value [start-value]
+(defn last-r3-value [start-value]
   (loop [v start-value all #{}]
-    (let [new-value (generate-c-at-28 v)]
+    (let [new-value (generate-r3-at-28 v)]
       (if (contains? all new-value) v
           (recur new-value (conj all new-value))))))
 
@@ -109,4 +109,4 @@
 ; Part 2
 ; We create a generator function for r3 values at instruction 28
 ; Of these generated values, we find the last non-repeated value to answer part 2
-#_(last-c-value 9107763)
+#_(last-r3-value 9107763)

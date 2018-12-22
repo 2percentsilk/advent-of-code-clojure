@@ -78,11 +78,6 @@
   (when-let [fun (ns-resolve 'advent.2018.day19 (symbol name))]
     (apply fun args)))
 
-(defmacro result [ins-name regs ins-vector]
-  `((ns-resolve *ns* (symbol ~ins-name))
-    ~regs
-    ~ins-vector))
-
 (defn regs-state [instruction-lines start-regs ip-reg limit]
   (loop [regs start-regs
          current-ins 0
@@ -95,13 +90,12 @@
                 ins-name (first ins)
                 insv (mapv read-string (rest ins))
                 evaled-state (call ins-name updated-pointer insv)]
-            ; (println updated-pointer current evaled-state)
             (recur evaled-state (inc (get evaled-state ip-reg)) (inc i)))
           regs))))
 
 (defn divisors [n]
   (loop [i 1 result #{}]
-    (if (> i (/ n 2)) result
+    (if (> (* i i) n) result
         (recur (inc i)
                (if (= 0 (mod n i))
                  (conj (conj result (/ n i)) i)

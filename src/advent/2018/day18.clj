@@ -61,8 +61,7 @@
 
 (defn board-state-after [board [boardx boardy] minutes]
   (loop [state board i 0]
-    (println i (res-value state))
-    ; (print-board-state state boardx boardy)
+    (print-board-state state boardx boardy)
     (if (>= i minutes) state
         (recur (next-board-state state boardx boardy) (inc i)))))
 

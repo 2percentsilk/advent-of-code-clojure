@@ -52,111 +52,77 @@
      (Math/abs (- z0 z1))))
 
 (defn inputs-in-range [inputs {radius :r pos :p}]
-  (loop [remaining inputs
-         in-range 0]
-    (if (empty? remaining) in-range
-        (let [current (get (first remaining) :p)
-              d (distance pos current)
-              new-in-range (if (<= d radius) (inc in-range) in-range)]
-          (recur (rest remaining) new-in-range)))))
+  (filter (fn [{p :p}] (<= (distance p pos) radius)) inputs))
 
 (def puzzle (parsed puzzle-input))
 
-(defn events-for-input [input]
-  (->> input
-       (mapcat (fn [{r :r p :p}] (vector {:t "enter"
-                                          :x (- (p 0) r)
-                                          :s {:r r :p p}}
-                                         {:t "exit"
-                                          :x (+ (p 0) r)
-                                          :s {:r r :p p}})))
-       (sort-by (juxt :x :t))))
+(defn coord-range [inputs idx]
+  (let [min-coords (map (fn [{pos :p r :r}] (- (get pos idx) r)) inputs)
+        max-coords (map (fn [{pos :p r :r}] (+ (get pos idx) r)) inputs)]
+    (vector (apply min min-coords) (apply max max-coords))))
 
-(defn has-intersection [{r0 :r p0 :p} {r1 :r p1 :p}]
-  (<= (distance p0 p1) (+ r0 r1)))
+(defn log2 [n] (/ (Math/log n) (Math/log 2)))
 
-(defn update-current-intersections [current-intersections current-intersecting new-s]
-  (loop [all-ins (keys current-intersections)
-         ins-map (assoc current-intersections (set (vector new-s)) 1)]
-    (cond
-      (empty? all-ins) ins-map
-      :else (let [current (first all-ins)
-                  intersects-all (set/subset? current current-intersecting)
-                  new-ins-map (if intersects-all
-                                (assoc ins-map (conj current new-s) (inc (count current)))
-                                ins-map)]
-              (recur (rest all-ins) new-ins-map)))))
+(defn power-of-two [n]
+  (->> n
+       log2
+       Math/ceil
+       (Math/pow 2)
+       int))
 
-(defn find-best [current-intersections {best-size :s best-elements :e}]
-  (let [[max-inter max-size] (first current-intersections)
-        is-better (> max-size best-size)]
-    (if is-better
-      {:s max-size :e max-inter}
-      {:s best-size :e best-elements})))
+(defn cube-center [size start]
+  (mapv #(int (Math/floor (+ (/ size 2) %))) start))
 
-(defn remove-ins-with [current-intersections old-s]
-  (loop [all-ins (keys current-intersections)
-         ins-map current-intersections]
-    (if (empty? all-ins) ins-map
-        (recur (rest all-ins)
-               (if (contains? (first all-ins) old-s)
-                 (dissoc ins-map (first all-ins)) ins-map)))))
+(defn cube-distance [{size :size start :start}]
+  (distance [0 0 0] (cube-center size start)))
 
-(defn sweep-input [input]
-  (loop [events (events-for-input input)
-         current-entered #{}
-         best-so-far {:s 0 :e #{}}]
-    (println (first events))
-    (if (empty? events) best-so-far
-        (let [current (first events)]
-          (condp = (current :t)
-            "enter" (let [new-s (current :s)
-                          intersects-with-best (= (best-so-far :s)
-                                                  (count (filter #(has-intersection new-s %) (best-so-far :e))))
-                          current-ins (conj (set (filter #(has-intersection new-s %) current-entered))
-                                            new-s)
-                          new-best (if intersects-with-best
-                                     {:s (inc (best-so-far :s)) :e (conj (best-so-far :e) new-s)}
-                                     (if (> (count current-ins) (best-so-far :s)) {:s (count current-ins) :e current-ins}
-                                         best-so-far))]
-                      (recur (rest events)
-                             (conj current-entered new-s)
-                             new-best))
+(defn cube-in-range [spheres cube]
+  (let [{size :size start :start} cube
+        center (cube-center size start)
+        diag (distance center start)]
+    (count (filter (fn [{r :r p :p}] (<= (distance center p) (+ r diag))) spheres))))
 
-            "exit" (recur (rest events)
-                          (disj current-entered (current :s))
-                          best-so-far))))))
+(defn initial-search-cube [inputs]
+  (let [ranges (map #(coord-range inputs %) (range 0 3))
+        max-length (apply max (mapv (fn [[m n]] (- n m)) ranges))
+        size (power-of-two max-length)]
+    {:size size
+     :start (mapv first ranges)
+     :distance (distance [0 0 0] (cube-center size (mapv first ranges)))
+     :in-range (count inputs)}))
 
-(defn gen-points [{r :r [x y z] :p}]
-  (let [xmin (- x r) xmax (inc (+ x r))
-        ymin (- y r) ymax (inc (+ y r))
-        zmin (- z r) zmax (inc (+ z r))]
-    (for [x0 (range xmin xmax)
-          y0 (range ymin ymax)
-          z0 (range zmin zmax)]
-      (vector x0 y0 z0))))
+(defn split-cubes [{size :size start :start} spheres]
+  (let [half (/ size 2)
+        s (for [x0 (range 0 2) y0 (range 0 2) z0 (range 0 2)]
+            (vector (* half x0) (* half y0) (* half z0)))]
+    (->> s
+         (map #(assoc {} :start (mapv + % start)))
+         (map #(assoc % :size half))
+         (map #(assoc % :distance (cube-distance %)))
+         (map #(assoc % :in-range (cube-in-range spheres %))))))
 
-(defn is-in-all-spheres [spheres pos]
-  (->> spheres
-       (filter (fn [{r :r p :p}] (<= (distance p pos) r)))
-       count
-       (= (count spheres))))
+(defn q-comp [[ir0 d0 s0] [ir1 d1 s1]]
+  (if (not (= ir0 ir1)) (> ir0 ir1)
+      (if (not (= d0 d1)) (< d0 d1)
+          (< s0 s1))))
 
-(defn intersection-pts [{spheres :e}]
-  (let [smallest-sphere (first (sort-by :r spheres))
-        _ (println smallest-sphere)
-        _ (println "min x" (apply min (map #(- (get (% :p) 0) (% :r)) spheres)))
-        _ (println "max x" (apply min (map #(+ (get (% :p) 0) (% :r)) spheres)))
-        ; pts (gen-points smallest-sphere)
-        ; _ (println (count pts))
-        ]
-    (count spheres)))
+(defn q-reducer [pqueue cube]
+  (let [{ir :in-range d :distance s :size} cube]
+    (assoc pqueue cube (vector ir d s))))
 
-#_(time (intersection-pts (sweep-input (parsed test-input-2))))
+(defn search-cubes [spheres]
+  (let [initial-cube (initial-search-cube spheres)
+        {ir :in-range d :distance s :size} initial-cube]
+    (loop [queue (pm/priority-map-by q-comp initial-cube (vector ir d s))]
+      (if-let [[cube cube-in-range] (first queue)]
+        (if (= (cube :size) 1) cube
+            (recur (reduce q-reducer (dissoc queue cube)
+                           (split-cubes cube spheres))))))))
+
+
 
 ; Part 1
-#_(inputs-in-range puzzle
-                   (max-radius puzzle))
-
+#_(count (inputs-in-range puzzle
+                          (max-radius puzzle)))
 ; Part 2
-(defn -main [] (println (intersection-pts (sweep-input (parsed puzzle-input)))))
+#_(search-cubes puzzle)

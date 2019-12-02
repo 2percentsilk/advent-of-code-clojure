@@ -3,12 +3,6 @@
 
 (def puzzle-input (slurp "inputs/2019/day2"))
 
-(def test-input
-  {:data {0 2, 1 0, 2 0, 3 0, 4 99}
-   :start 0})
-
-(def test-input-2 "1,9,10,3,2,3,11,0,99,30,40,50")
-
 (defn parse-input [input]
   (map read-string (str/split input #",")))
 
@@ -17,31 +11,27 @@
                        (map-indexed hash-map)
                        (into {}))})
 
-(defn action [state fn]
-  (let [start (:start state) data (:data state)
-        op-1 (get data (+ 1 start))
+(defn action [{start :start data :data} fn]
+  (let [op-1 (get data (+ 1 start))
         op-2 (get data (+ 2 start))
         result (get data (+ 3 start))]
     {:start (+ start 4)
-     :data (assoc data result (fn (get data op-1) (get data op-2)))}))
+     :data (assoc data result (fn (op-1 data) (op-2 data)))}))
 
 (defn add-action [state] (action state +))
 
 (defn mul-action [state] (action state *))
 
-(defn run-once [state]
-  (let [start (:start state) data (:data state)
-        opcode (get data start)]
-    (cond 
-      (= opcode 99) {:start nil, :data data}
-      (= opcode 1) (add-action state)
-      (= opcode 2) (mul-action state)
-      :else "error")))
+(defn run-once [{start :start data :data :as state}]
+  (condp = (get data start)
+    99 {:start nil, :data data}
+    1 (add-action state)
+    2 (mul-action state)
+    :else "error"))
 
-(defn run-all [state]
-  (let [start (:start state)]
-    (if (nil? start) state
-        (run-all (run-once state)))))
+(defn run-all [{start :start :as state}]
+  (if (nil? start) state
+      (run-all (run-once state))))
 
 (defn at-zero [state]
   (-> state
@@ -49,8 +39,7 @@
       (get 0)))
 
 (defn replace-noun-verb [state noun verb]
-  (let [data (:data state)]
-    (assoc state :data (assoc (assoc data 2 verb) 1 noun))))
+  (update-in state [:data] merge {1 noun 2 verb}))
 
 (defn correct-state [state] (replace-noun-verb state 12 2))
 

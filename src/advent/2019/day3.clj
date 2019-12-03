@@ -17,10 +17,10 @@
 (defn new-segments [segments direction length sx sy]
   (conj segments
         (condp = direction
-          "R" {:dir "x" :y sy :x0 sx :x1 (+ sx length)}
-          "U" {:dir "y" :x sx :y0 sy :y1 (+ sy length)}
-          "L" {:dir "x" :y sy :x0 (- sx length) :x1 sx}
-          "D" {:dir "y" :x sx :y0 (- sy length) :y1 sy})))
+          "R" {:dir "x" :y sy :x0 sx :x1 (+ sx length) :walk-dir direction}
+          "U" {:dir "y" :x sx :y0 sy :y1 (+ sy length) :walk-dir direction}
+          "L" {:dir "x" :y sy :x0 (- sx length) :x1 sx :walk-dir direction}
+          "D" {:dir "y" :x sx :y0 (- sy length) :y1 sy :walk-dir direction})))
 
 (defn parse-line-rec [raw {start-x :x start-y :y} segments]
   (if (empty? raw) segments
@@ -31,82 +31,103 @@
                         (new-start direction length start-x start-y)
                         (new-segments segments direction length start-x start-y)))))
 
-(defn parse-line [raw] (parse-line-rec raw {:x 0 :y 0} '()))
+(defn parse-line [raw]
+  (-> raw
+      (parse-line-rec {:x 0 :y 0} '())
+      reverse))
 
-(parse-line (str/split "R75,D30,R83,U83,L12,D49,R71,U7,L72" #","))
+; (parse-line (str/split "R8,U5,L5,D3" #","))
+; (parse-line (str/split "U7,R6,D4,L4" #","))
 
 (defn x-segs [segments] (filter #(= "x" (:dir %)) segments))
 
 (defn y-segs [segments] (filter #(= "y" (:dir %)) segments))
 
-(defn point-on-x-segments? [segments px py]
-  (->> segments
-       x-segs
-       (filter #(and (= py (:y %)) (>= px (:x0 %)) (<= px (:x1 %))))
-       empty?
-       not))
+(defn cross-intersections-int [{:keys [y x0 x1]} ysegs]
+  (->> ysegs
+       (filter #(and (<= (:x %) x1) (>= (:x %) x0)))
+       (filter #(and (<= y (:y1 %)) (>= y (:y0 %))))
+       (map #(hash-map :x (:x %), :y y))))
 
-(defn point-on-y-segments? [segments px py]
-  (->> segments
-       y-segs
-       (filter #(and (= px (:x %)) (>= py (:y0 %)) (<= py (:y1 %))))
-       empty?
-       not))
+; (cross-intersections-int {:dir "x", :y 0, :x0 0, :x1 8} '({:dir "y", :x 8, :y0 0, :y1 5}))
 
-(defn point-on-line? [line point-x point-y]
-  (or (point-on-x-segments? line point-x point-y)
-      (point-on-y-segments? line point-x point-y)))
+(defn cross-intersections [xsegs ysegs]
+  (->> xsegs
+       (map #(cross-intersections-int % ysegs))
+       (apply concat)))
 
-(defn segment-x-pts [{:keys [y x0 x1] :as segment}]
-  (if (> x0 x1) '() 
-      (conj (segment-x-pts (assoc segment :x0 (inc x0))) {:x x0 :y y})))
+(defn intersection-pts [line-1 line-2]
+  (concat (cross-intersections (x-segs line-1) (y-segs line-2))
+          (cross-intersections (x-segs line-2) (y-segs line-1))))
 
-(defn segment-y-pts [{:keys [x y0 y1] :as segment}]
-  (if (> y0 y1) '()
-      (conj (segment-y-pts (assoc segment :y0 (inc y0))) {:x x :y y0})))
-
-(defn segment-pts [{dir :dir :as segment}]
-  (condp = dir
-    "x" (segment-x-pts segment)
-    "y" (segment-y-pts segment)))
+; (intersection-pts (parse-line (str/split "R8,U5,L5,D3" #","))
+;                   (parse-line (str/split "U7,R6,D4,L4" #",")))
 
 (defn abs [n] (max n (- n)))
 
-(defn new-commons [commons line px py]
-  (if (point-on-line? line px py) 
-    (conj commons (+ (abs px) (abs py))) 
-    commons))
+(defn manhattan [{:keys [x y]}] (+ (abs x) (abs y)))
 
-(defn find-commons [line-1 line-2]
-  (loop [pts (segment-pts (peek line-1))
-         remaining (pop line-1)
-         commons '()]
-    (cond 
-      (and (empty? pts) (empty? remaining)) commons
-      (empty? pts) (recur (segment-pts (peek remaining))
-                          (pop remaining) 
-                          commons)
-      :else (recur (pop pts) 
-                   remaining 
-                   (new-commons commons line-2 (:x (peek pts)) (:y (peek pts)))))))
-
-; (find-commons (parse-line '("R8" "U5" "L5" "D3"))
-;               (parse-line '("U7" "R6" "D4" "L4")))
-
-; (find-commons (parse-line (str/split "U62,R66,U55,R34,D71,R55,D58,R83" #","))
-;               (parse-line (str/split "R75,D30,R83,U83,L12,D49,R71,U7,L72" #",")))
-
-; (find-commons (parse-line (str/split "R75,D30,R83,U83,L12,D49,R71,U7,L72" #","))
-;               (parse-line (str/split "U62,R66,U55,R34,D71,R55,D58,R83" #",")))
-
-
-; (find-commons (parse-line (str/split "R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51" #","))
-;               (parse-line (str/split "U98,R91,D20,R16,D67,R40,U7,R15,U6,R7" #",")))
-
+; Part 1: 3247
 (def part-1
-  (->> (find-commons (parse-line puzzle-line-1)
-                     (parse-line puzzle-line-2))
+  (->> (intersection-pts (parse-line puzzle-line-1)
+                         (parse-line puzzle-line-2))
+       (map manhattan)
        (filter #(not (= 0 %)))
        (apply min)))
 
-(defn -main [] (println part-1))
+(defn point-on-x-segment? [px py {:keys [y x0 x1]}]
+  (and (= y py) (<= px x1) (>= px x0)))
+
+(defn point-on-y-segment? [px py {:keys [x y0 y1]}]
+  (and (= x px) (<= py y1) (>= py y0)))
+
+(defn point-on-segment? [px py {dir :dir :as segment}]
+  (condp = dir
+    "x" (point-on-x-segment? px py segment)
+    "y" (point-on-y-segment? px py segment)))
+
+(defn length-xseg [{:keys [x0 x1]}] (abs (- x1 x0)))
+(defn length-yseg [{:keys [y0 y1]}] (abs (- y1 y0)))
+
+(defn length [{dir :dir :as segment}]
+  (condp = dir 
+    "x" (length-xseg segment)
+    "y" (length-yseg segment)))
+
+(defn dist-on-xseg [{:keys [walk-dir x0 x1]} px py]
+  (condp = walk-dir
+    "R" (abs (- px x0))
+    "L" (abs (- x1 px))))
+
+(defn dist-on-yseg [{:keys [walk-dir y0 y1]} px py]
+  (condp = walk-dir
+    "U" (abs (- py y0))
+    "D" (abs (- y1 py))))
+
+(defn distance-on-segment [{dir :dir :as segment} px py]
+  (condp = dir
+    "x" (dist-on-xseg segment px py)
+    "y" (dist-on-yseg segment px py)))
+
+(defn steps-on-line [{:keys [x y]} segments]
+  (loop [remaining segments steps 0]
+    (if (not (point-on-segment? x y (peek remaining))) 
+      (recur (pop remaining) (+ steps (length (peek remaining))))
+      (+ steps (distance-on-segment (peek remaining) x y)))))
+
+; (steps-on-line {:x 3 :y 3}
+;                (parse-line (str/split "R8,U5,L5,D3" #",")))
+
+(defn steps [pt line-1 line-2]
+  (+ (steps-on-line pt line-1) (steps-on-line pt line-2)))
+
+; (steps {:x 3 :y 3}
+;        (parse-line (str/split "R8,U5,L5,D3" #","))
+;        (parse-line (str/split "U7,R6,D4,L4" #",")))
+
+; Part 2: 48054
+(def part-2
+  (->> (intersection-pts (parse-line puzzle-line-1) (parse-line puzzle-line-2))
+       (map #(steps % (parse-line puzzle-line-1) (parse-line puzzle-line-2)))
+       (filter #(not (= 0 %)))
+       (apply min)))

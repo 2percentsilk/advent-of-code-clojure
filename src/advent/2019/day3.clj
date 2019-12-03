@@ -126,8 +126,11 @@
 ;        (parse-line (str/split "U7,R6,D4,L4" #",")))
 
 ; Part 2: 48054
-(def part-2
-  (->> (intersection-pts (parse-line puzzle-line-1) (parse-line puzzle-line-2))
-       (map #(steps % (parse-line puzzle-line-1) (parse-line puzzle-line-2)))
-       (filter #(not (= 0 %)))
-       (apply min)))
+; "Elapsed time: 52.47062 msecs"
+(time
+ (def part-2
+   (->> (intersection-pts (parse-line puzzle-line-1) (parse-line puzzle-line-2))
+        (map #(steps % (parse-line puzzle-line-1) (parse-line puzzle-line-2)))
+        (filter #(not (= 0 %)))
+        (apply min)))
+ )

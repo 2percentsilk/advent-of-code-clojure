@@ -7,20 +7,16 @@
                        (str/split #""))))
 
 (defn adjacent? [number]
-  (let [ds (digits number)]
-    (loop [f (first ds) rem (rest ds)]
-      (cond
-        (empty? rem) false
-        (= f (first rem)) true
-        :else (recur (first rem) (rest rem))))))
+  (->> number
+       digits
+       (partition 2 1)
+       (some (fn [[x y]] (= x y)))))
 
 (defn increasing-digits? [number]
-  (let [ds (digits number)]
-    (loop [f (first ds) rem (rest ds)]
-      (cond
-        (empty? rem) true
-        (< (first rem) f) false
-        :else (recur (first rem) (rest rem))))))
+  (->> number
+       digits
+       (partition 2 1)
+       (every? (fn [[x y]] (>= y x)))))
 
 ; (increasing-digits? 223455)
 
@@ -48,13 +44,12 @@
   (let [shifted (shift number)]
     (loop [p nil c (first shifted) rem (rest shifted)]
       (cond
-        (and (nil? p) (= c 0) (not (= 0 (first rem)))) true
-        (and (not (= 0 p)) (= 0 c) (not (= 0 (first rem)))) true
-        (and (empty? rem) (= 0 c) (not (= 0 p))) true
+        (and (nil? p) (= c 0) (not= 0 (first rem))) true
+        (and (not= 0 p) (= 0 c) (not= 0 (first rem))) true
+        (and (empty? rem) (= 0 c) (not= 0 p)) true
         (empty? rem) false
         :else (recur c (first rem) (rest rem))))))
 
-; (shift 123444)
 ; (adjacent-part-2? 111122)
 
 (defn valid-part-2? [number]

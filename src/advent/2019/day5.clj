@@ -31,53 +31,70 @@
 
 (defn immediate? [idxs idx] (some #(= % idx) idxs))
 
-(immediate? (:immediates (parse-ins 1002)) 1)
+; (immediate? (:immediates (parse-ins 1002)) 1)
+
+(defn para-i  [{start :start data :data} ins para-idx]
+  (let [immediate-idxs (:immediates (parse-ins ins))]
+    (if (immediate? immediate-idxs (dec para-idx)) (get data (+ para-idx start))
+        (get data (get data (+ para-idx start))))))
 
 (defn action [{start :start data :data :as state} ins fn]
-  (let [immediate-idxs (:immediates (parse-ins ins))
-        op-1 (if (immediate? immediate-idxs 0) (get data (+ 1 start))
-                 (get data (get data (+ 1 start))))
-        op-2 (if (immediate? immediate-idxs 1) (get data (+ 2 start))
-                 (get data (get data (+ 2 start))))
-        result (get data (+ 3 start))]
-    (assoc state
-           :start (+ start 4)
-           :data (assoc data result (fn op-1 op-2)))))
+  (let [para-1 (para-i state ins 1)
+        para-2 (para-i state ins 2)
+        para-3 (get data (+ 3 start))]
+    (assoc state :start (+ start 4)
+           :data (assoc data para-3 (fn para-1 para-2)))))
 
 (defn add-action [state ins] (action state ins +))
 
 (defn mul-action [state ins] (action state ins *))
 
-(defn run-once [{start :start data :data :as state}]
+(defn run-once [{start :start data :data :as state} input]
   (condp = (:op (parse-ins (get data start)))
     99 (assoc state :start nil)
     1 (add-action state (get data start))
     2 (mul-action state (get data start))
     3 (assoc state
-             :start (+ start 2)
-             :data (assoc data (get data (inc start)) 1)) ; use 1 as input
+             :start (+ 2 start)
+             :data (assoc data (get data (inc start)) input)) ; use 1 as input
     4 (assoc state
-             :start (+ start 2)
-             :outputs (conj (:outputs state) 
-                            (if (immediate? (:immediates (parse-ins (get data start))) 0)
-                              (get data (inc start))
-                              (get data (get data (inc start))))
-                            ))
+             :start (+ 2 start)
+             :outputs (conj (:outputs state) (para-i state (get data start) 1)))
+    5 (assoc state 
+             :start (if (not= 0 (para-i state (get data start) 1))
+                      (para-i state (get data start) 2)
+                      (+ 3 start)))
+    6 (assoc state
+             :start (if (= 0 (para-i state (get data start) 1) )
+                      (para-i state (get data start) 2)
+                      (+ 3 start)))
+    7 (assoc state
+             :start (+ 4 start)
+             :data (assoc data (get data (+ 3 start))
+                          (if (< (para-i state (get data start) 1)
+                                 (para-i state (get data start) 2))
+                            1 0)))
+    8 (assoc state
+             :start (+ 4 start)
+             :data (assoc data (get data (+ 3 start))
+                          (if (= (para-i state (get data start) 1)
+                                 (para-i state (get data start) 2))
+                            1 0)))
     :else "error"))
 
-(defn run-all [{start :start :as state}]
+(defn run-all [{start :start :as state} input]
   (if (nil? start) state
-      (run-all (run-once state))))
+      (run-all (run-once state input) input)))
 
-(-> "1002,4,3,4,33"
-    parse-input
-    build-state
-    run-all)
+; (-> "1002,4,3,4,33"
+;     parse-input
+;     build-state
+;     run-all)
 
-(-> "3,0,4,0,99"
-    parse-input
-    build-state
-    run-all)
+; (-> "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99"
+;     parse-input
+;     build-state
+;     (run-all 8))
 
 ; Part 1
 ; :outputs (5074395 0 0 0 0 0 0 0 0 0)
@@ -85,4 +102,11 @@
   (-> puzzle-input
       parse-input
       build-state
-      run-all))
+      (run-all 1)))
+
+; Part 2: 8346937
+(def part-2
+  (-> puzzle-input
+      parse-input
+      build-state
+      (run-all 5)))

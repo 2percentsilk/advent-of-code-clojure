@@ -17,11 +17,8 @@
 (defn ring-max [ring] (sqr (inc (* 2 ring))))
 
 (defn ring-centers [ring]
-  (let [rmax (ring-max ring)]
-    [(- rmax ring)
-     (- rmax (* 3 ring))
-     (- rmax (* 5 ring))
-     (- rmax (* 7 ring))]))
+  (->> (range 1 8 2)
+       (map (fn [x y] (- x (* y ring))) (repeat (ring-max ring)))))
 
 (defn distance-from-ring-center [number] 
   (->> (ring-centers (ring number))

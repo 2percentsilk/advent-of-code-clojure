@@ -58,7 +58,11 @@
              :data (assoc data (get data (inc start)) 1)) ; use 1 as input
     4 (assoc state
              :start (+ start 2)
-             :outputs (conj (:outputs state) (get data (get data (inc start)))))
+             :outputs (conj (:outputs state) 
+                            (if (immediate? (:immediates (parse-ins (get data start))) 0)
+                              (get data (inc start))
+                              (get data (get data (inc start))))
+                            ))
     :else "error"))
 
 (defn run-all [{start :start :as state}]
@@ -76,7 +80,7 @@
     run-all)
 
 ; Part 1
-; :outputs (5074395 0 0 0 0 0 0 0 0 3)
+; :outputs (5074395 0 0 0 0 0 0 0 0 0)
 (def part-1
   (-> puzzle-input
       parse-input

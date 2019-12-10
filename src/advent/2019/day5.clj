@@ -12,43 +12,56 @@
               (map-indexed hash-map)
               (into {}))
    :outputs '()
-   :inputs inputs})
+   :inputs inputs
+   :rel-base 0})
+
+(defn getter [data i] (get data i 0))
 
 (defn rev-digits [x] (if (= x 0) '()
                          (conj (rev-digits (quot x 10)) (mod x 10))))
 
-(defn parse-parameter [parameter]
-  "returns indices of immediate mode parameters"
+(defn parse-non-position [parameter mode]
   (->> parameter
        rev-digits
-       (map-indexed (fn [idx itm] (if (= itm 1) idx nil)))
+       (map-indexed (fn [idx itm] (if (= itm mode) idx nil)))
        (filter #(not= nil %))))
 
-(parse-parameter (quot 1002 100))
+(defn parse-immediates [parameter]
+  "returns indices of immediate mode parameters"
+  (parse-non-position parameter 1))
+
+(defn parse-relatives [parameter]
+  "returns indices of relative mode parameters"
+  (parse-non-position parameter 2))
 
 (defn parse-ins [instruction]
   {:op (mod instruction 100)
-   :immediates (parse-parameter (quot instruction 100))})
+   :immediates (parse-immediates (quot instruction 100))
+   :relatives (parse-relatives (quot instruction 100))})
 
-(defn immediate? [idxs idx] (some #(= % idx) idxs))
+(defn idx-match? [idxs idx] (some #(= % idx) idxs))
 
-; (immediate? (:immediates (parse-ins 1002)) 1)
+(defn pos-i [{start :start data :data rel-base :rel-base} ins para-idx]
+  (let [immediate-idxs (:immediates (parse-ins ins))
+        relative-idxs (:relatives (parse-ins ins))]
+    (cond
+      (idx-match? immediate-idxs (dec para-idx)) (+ para-idx start)
+      (idx-match? relative-idxs (dec para-idx)) (+ rel-base
+                                                   (getter data (+ para-idx start)))
+      :else (getter data (+ para-idx start)))))
 
-(defn para-i  [{start :start data :data} ins para-idx]
-  (let [immediate-idxs (:immediates (parse-ins ins))]
-    (if (immediate? immediate-idxs (dec para-idx)) (get data (+ para-idx start))
-        (get data (get data (+ para-idx start))))))
+(defn para-i [{data :data :as state} ins para-idx] (getter data (pos-i state ins para-idx)))
 
-(defn action [{start :start data :data :as state} ins fn]
+(defn arith-action [{start :start data :data :as state} ins fn]
   (let [para-1 (para-i state ins 1)
         para-2 (para-i state ins 2)
-        para-3 (get data (+ 3 start))]
+        pos (pos-i state ins 3)]
     (assoc state :start (+ start 4)
-           :data (assoc data para-3 (fn para-1 para-2)))))
+           :data (assoc data pos (fn para-1 para-2)))))
 
-(defn add-action [state ins] (action state ins +))
+(defn add-action [state ins] (arith-action state ins +))
 
-(defn mul-action [state ins] (action state ins *))
+(defn mul-action [state ins] (arith-action state ins *))
 
 (defn jump-action [{start :start :as state} ins fn]
   (assoc state
@@ -62,44 +75,40 @@
 
 (defn compare-action [{start :start data :data :as state} ins fn]
   (assoc state :start (+ 4 start)
-         :data (assoc data (get data (+ 3 start))
+         :data (assoc data (pos-i state ins 3)
                       (if (fn (para-i state ins 1) (para-i state ins 2)) 1 0))))
 
 (defn action-lt [state ins] (compare-action state ins <))
 
 (defn action-eq [state ins] (compare-action state ins =))
 
-(defn run-once [{start :start data :data inputs :inputs :as state}]
-  (condp = (:op (parse-ins (get data start)))
+(defn run-once [{start :start data :data inputs :inputs rel-base :rel-base
+                 :as state}]
+  (condp = (:op (parse-ins (getter data start)))
     99 (assoc state :start nil)
-    1 (add-action state (get data start))
-    2 (mul-action state (get data start))
+    1 (add-action state (getter data start))
+    2 (mul-action state (getter data start))
     3 (assoc state
              :start (+ 2 start)
-             :data (assoc data (get data (inc start)) (peek inputs))
+             :data (assoc data (pos-i state (getter data start) 1)
+                          (peek inputs))
              :inputs (pop inputs))
     4 (assoc state
              :start (+ 2 start)
-             :outputs (conj (:outputs state) (para-i state (get data start) 1)))
-    5 (jump-if-true state (get data start))
-    6 (jump-if-false state (get data start))
-    7 (action-lt state (get data start))
-    8 (action-eq state (get data start))
+             :outputs (conj (:outputs state) 
+                            (para-i state (getter data start) 1)))
+    5 (jump-if-true state (getter data start))
+    6 (jump-if-false state (getter data start))
+    7 (action-lt state (getter data start))
+    8 (action-eq state (getter data start))
+    9 (assoc state 
+             :start (+ 2 start)
+             :rel-base (+ rel-base (para-i state (getter data start) 1)))
     :else "error"))
 
 (defn run-all [{start :start :as state}]
   (if (nil? start) state
       (run-all (run-once state))))
-
-; (-> "1002,4,3,4,33"
-;     parse-input
-;     build-state
-;     run-all)
-
-; (-> "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99"
-;     parse-input
-;     build-state
-;     (run-all 8))
 
 ; Part 1
 ; :outputs (5074395 0 0 0 0 0 0 0 0 0)

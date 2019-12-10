@@ -110,6 +110,11 @@
   (if (nil? start) state
       (run-all (run-once state))))
 
+(defn run-all-iter [state]
+  (loop [iter-state state]
+    (if (nil? (:start iter-state))
+      iter-state (recur (run-once iter-state)))))
+
 ; Part 1
 ; :outputs (5074395 0 0 0 0 0 0 0 0 0)
 #_(def part-1
